@@ -1,3 +1,6 @@
+close all
+clear all
+
 load('data.mat')
 
 total_distance_gps = 0;
