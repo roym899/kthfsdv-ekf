@@ -31,7 +31,7 @@ def data_publisher():
     speedometer_pub = rospy.Publisher('speedometer', Float64, queue_size=1)
     imu_pub = rospy.Publisher('imu', Imu, queue_size=1)
     rospy.init_node('data_publisher', anonymous=True)
-    rate = rospy.Rate(1000)
+    rate = rospy.Rate(100)
 
     start_time = rospy.get_time()
 
