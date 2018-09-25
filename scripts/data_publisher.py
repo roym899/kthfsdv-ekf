@@ -5,7 +5,7 @@ import numpy as np
 import os
 import scipy.io as sio
 from geometry_msgs.msg import Pose2D, Vector3
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Header
 from sensor_msgs.msg import Imu
 
 def data_publisher():
@@ -44,6 +44,7 @@ def data_publisher():
             for gps_index in gps_indices:
                 gps_msg = Pose2D(x=gps['x'][gps_index],
                                  y=gps['y'][gps_index])
+
                 gps_pub.publish(gps_msg)
             for key in gps:
                 gps[key] = np.delete(gps[key], gps_indices)
@@ -66,7 +67,8 @@ def data_publisher():
                                                           z=imu['az'][imu_index]),
                               angular_velocity=Vector3(x=imu['alphax'][imu_index],
                                                        y=imu['alphay'][imu_index],
-                                                       z=imu['alphaz'][imu_index]))
+                                                       z=imu['alphaz'][imu_index]),
+                              header=Header(stamp=rospy.Time.now()))
                 imu_pub.publish(imu_msg)
             for key in imu:
                 imu[key] = np.delete(imu[key], imu_indices)
