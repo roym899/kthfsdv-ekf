@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   roscpp
   cmake_modules
+  visualization_msgs
 )
 
 find_package(Eigen REQUIRED)

@@ -2,6 +2,8 @@
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/Pose2D.h"
 #include "std_msgs/Float64.h"
+#include "visualization_msgs/Marker.h"
+#include "tf/tf.h"
 
 #include <sstream>
 #include <cmath>
@@ -12,6 +14,9 @@ using namespace Eigen;
 const double pi = 3.1415;
 
 const int ekf_frequency = 100;
+
+const int max_markers = 1000;
+int marker_id = 0;
 
 ros::Time last_update_time;
 bool first_update = true;
@@ -128,9 +133,11 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
 
   ros::Publisher estimate_pub = n.advertise<geometry_msgs::Pose2D>("/ekf_estimate", 1);
+  ros::Publisher estimate_rviz_pub = n.advertise<visualization_msgs::Marker>("/ekf_estimate_rviz", 1);
   ros::Subscriber imu_sub = n.subscribe("/imu", 1, imuCallback);
   ros::Subscriber gps_sub = n.subscribe("/gps", 1, gpsCallback);
   ros::Subscriber speedometer_sub = n.subscribe("/speedometer", 1, speedometerCallback);
+
 
   ros::Rate loop_rate(ekf_frequency);
 
@@ -138,6 +145,7 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
+
     // filter update will be handled inside callbacks
     ros::spinOnce();
       ROS_INFO_STREAM(current_state);
@@ -148,6 +156,36 @@ int main(int argc, char **argv)
     estimate_msg.y = current_state(1);
     estimate_msg.theta = current_state(2);
     estimate_pub.publish(estimate_msg);
+
+    // RViz visualization
+    visualization_msgs::Marker marker;
+
+    marker.header.frame_id = "/map";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "ekf_estimate";
+    marker.id = marker_id++;
+    marker_id = marker_id % max_markers;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = current_state(0);
+    marker.pose.position.y = current_state(1);
+    marker.pose.position.z = 0;
+    tf::Quaternion q =  tf::createQuaternionFromRPY(0, 0, current_state(2));
+    marker.pose.orientation.x = q.x();
+    marker.pose.orientation.y = q.y();
+    marker.pose.orientation.z = q.z();
+    marker.pose.orientation.w = q.w();
+    marker.scale.x = 4;
+    marker.scale.y = 1;
+    marker.scale.z = 1;
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+    marker.lifetime = ros::Duration();
+
+
+    estimate_rviz_pub.publish(marker);
 
     loop_rate.sleep();
   }
